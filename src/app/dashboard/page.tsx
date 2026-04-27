@@ -12,6 +12,21 @@ export default function Dashboard() {
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Load from cache on mount for "instant" feel
+  useEffect(() => {
+    const cachedStats = localStorage.getItem('codeforge_dashboard_stats');
+    const cachedMastery = localStorage.getItem('codeforge_dashboard_mastery');
+    
+    if (cachedStats) {
+      setStats(JSON.parse(cachedStats));
+      setIsLoadingStats(false);
+    }
+    if (cachedMastery) {
+      setMastery(JSON.parse(cachedMastery));
+      setIsLoadingMastery(false);
+    }
+  }, []);
+
   useEffect(() => {
     async function fetchStats() {
       try {
@@ -19,6 +34,7 @@ export default function Dashboard() {
         if (res.ok) {
           const data = await res.json();
           setStats(data);
+          localStorage.setItem('codeforge_dashboard_stats', JSON.stringify(data));
         }
       } catch (err) {
         console.error('Failed to fetch stats:', err);
@@ -33,6 +49,7 @@ export default function Dashboard() {
         if (res.ok) {
           const data = await res.json();
           setMastery(data);
+          localStorage.setItem('codeforge_dashboard_mastery', JSON.stringify(data));
         }
       } catch (err) {
         console.error('Failed to fetch mastery:', err);

@@ -2,9 +2,11 @@
 import { useState, useEffect, use, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { Play, Send, CheckCircle2, XCircle, AlertTriangle, Loader2, Terminal } from 'lucide-react';
+import { useSession, signIn } from 'next-auth/react';
 
 export default function ProblemWorkspace({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const { data: session } = useSession();
   const [question, setQuestion] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'problem' | 'submissions' | 'theory'>('problem');
   
@@ -14,7 +16,7 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
   
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [output, setOutput] = useState<any>(null); // { type: 'run' | 'submit', data: any }
+  const [output, setOutput] = useState<any>(null);
   
   const consoleRef = useRef<HTMLDivElement>(null);
 
@@ -31,7 +33,6 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
         setQuestion(data);
         if (data.sampleInput) setCustomInput(data.sampleInput);
         
-        // Auto-detect language based on topic
         const cppTopics = [
           'Class and Objects', 'Constructors and Destructors', 'Static Data Members', 
           'Inline Functions', 'Call by Reference', 'Functions with Default Arguments', 
@@ -93,14 +94,12 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
       
       {/* Left Pane: Problem Description */}
       <div className="w-full lg:w-1/2 flex flex-col border-r border-slate-800 bg-slate-900">
-        {/* Tabs */}
         <div className="flex bg-slate-950 px-4 border-b border-slate-800">
           <button onClick={() => setActiveTab('problem')} className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'problem' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>Problem</button>
           <button onClick={() => setActiveTab('theory')} className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'theory' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>Theory</button>
           <button onClick={() => setActiveTab('submissions')} className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'submissions' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>Submissions</button>
         </div>
 
-        {/* Content Scroll Area */}
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           {activeTab === 'problem' && (
             <div className="space-y-6">
@@ -115,8 +114,8 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
                 </span>
               </div>
               
-              <div className="prose prose-invert max-w-none">
-                <p className="whitespace-pre-wrap text-slate-300">{question.statement}</p>
+              <div className="prose prose-invert max-w-none text-slate-300">
+                <p className="whitespace-pre-wrap">{question.statement}</p>
               </div>
 
               <div>
@@ -162,15 +161,15 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
             <div className="text-slate-400 text-center pt-10">Theory content will be loaded here.</div>
           )}
           {activeTab === 'submissions' && (
-            <div className="text-slate-400 text-center pt-10">Login to view your submissions.</div>
+            <div className="text-slate-400 text-center pt-10">
+              {session ? 'Your submissions will appear here.' : 'Please sign in to view your submissions.'}
+            </div>
           )}
         </div>
       </div>
 
       {/* Right Pane: Editor & Output */}
       <div className="w-full lg:w-1/2 flex flex-col bg-slate-900 overflow-hidden">
-        
-        {/* Editor Toolbar */}
         <div className="flex items-center justify-between px-4 py-2 bg-slate-950 border-b border-slate-800">
           <select 
             value={language}
@@ -200,7 +199,6 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
           </div>
         </div>
 
-        {/* Monaco Editor */}
         <div className="flex-1 relative border-b border-slate-800">
           <Editor
             height="100%"
@@ -211,22 +209,16 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
             options={{
               minimap: { enabled: false },
               fontSize: 14,
-              fontFamily: 'var(--font-mono)',
               padding: { top: 16, bottom: 16 },
               scrollBeyondLastLine: false,
-              smoothScrolling: true,
-              cursorBlinking: 'smooth',
-              scrollbar: {
-                alwaysConsumeMouseWheel: false,
-              }
+              scrollbar: { alwaysConsumeMouseWheel: false }
             }}
           />
         </div>
 
-        {/* Console / Output Area */}
-        <div className="h-[250px] flex flex-col bg-slate-950 overflow-hidden">
+        <div className="h-[250px] flex flex-col bg-slate-950 overflow-hidden" ref={consoleRef}>
           <div className="px-4 py-2 border-b border-slate-800 bg-slate-900 flex justify-between items-center">
-            <span className="text-sm font-medium text-slate-300">Console & Custom Input</span>
+            <span className="text-sm font-medium text-slate-300">Console & Output</span>
             {output && <button onClick={() => setOutput(null)} className="text-xs text-blue-400 hover:underline">Clear</button>}
           </div>
           

@@ -275,6 +275,5 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
 }

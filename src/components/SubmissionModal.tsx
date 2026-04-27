@@ -94,10 +94,11 @@ export default function SubmissionModal({ isOpen, onClose, submission }: Submiss
         </div>
 
         {/* Code Editor */}
-        <div className="flex-1 min-h-[400px] bg-slate-950">
+        <div className="h-[500px] bg-slate-950 relative border-t border-slate-800">
           <Editor
+            key={submission.submittedAt?.toString() || 'default'}
             height="100%"
-            language={submission.language}
+            language={submission.language === 'cpp' ? 'cpp' : 'c'}
             theme="vs-dark"
             value={submission.code}
             options={{

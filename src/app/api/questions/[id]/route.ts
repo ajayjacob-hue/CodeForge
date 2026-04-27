@@ -28,7 +28,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   try {
     try {
       await connectDB();
-      const question = await Question.findById(id);
+      const question = await Question.findById(id).populate('topicId');
       if (question) {
         return NextResponse.json(question);
       }

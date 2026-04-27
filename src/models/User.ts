@@ -6,6 +6,15 @@ export interface IUser extends Document {
   passwordHash: string;
   solvedQuestions: mongoose.Types.ObjectId[];
   bookmarks: mongoose.Types.ObjectId[];
+  submissions: {
+    questionId: mongoose.Types.ObjectId;
+    code: string;
+    language: string;
+    verdict: string;
+    passedCount: number;
+    totalCount: number;
+    submittedAt: Date;
+  }[];
   streak: number;
   lastActiveDate: Date;
 }
@@ -17,6 +26,17 @@ const UserSchema: Schema<IUser> = new Schema(
     passwordHash: { type: String, required: true },
     solvedQuestions: [{ type: Schema.Types.ObjectId, ref: 'Question' }],
     bookmarks: [{ type: Schema.Types.ObjectId, ref: 'Question' }],
+    submissions: [
+      {
+        questionId: { type: Schema.Types.ObjectId, ref: 'Question' },
+        code: String,
+        language: String,
+        verdict: String,
+        passedCount: Number,
+        totalCount: Number,
+        submittedAt: { type: Date, default: Date.now },
+      },
+    ],
     streak: { type: Number, default: 0 },
     lastActiveDate: { type: Date, default: Date.now },
   },

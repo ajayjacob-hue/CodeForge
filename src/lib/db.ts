@@ -1,9 +1,24 @@
 import mongoose from 'mongoose';
+import path from 'path';
+import fs from 'fs';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/codeforge';
+let MONGODB_URI = process.env.MONGODB_URI;
+
+// Manual fallback for environments where .env isn't automatically loaded
+if (!MONGODB_URI) {
+  const envPath = path.resolve(process.cwd(), '.env');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    const match = envContent.match(/^MONGODB_URI=(.*)$/m);
+    if (match) {
+      MONGODB_URI = match[1].trim();
+      process.env.MONGODB_URI = MONGODB_URI;
+    }
+  }
+}
 
 if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env');
+  console.error('CRITICAL: MONGODB_URI is not defined!');
 }
 
 /**
@@ -25,6 +40,7 @@ async function connectToDatabase() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 1500, // Fail fast in 1.5s if DB is not available
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {

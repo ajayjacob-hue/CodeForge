@@ -85,7 +85,6 @@ export default function PracticePage() {
                         }`}>
                           {q.difficulty}
                         </span>
-                        <span className="text-slate-500">Acceptance: 85%</span>
                       </div>
                     </div>
                   </div>

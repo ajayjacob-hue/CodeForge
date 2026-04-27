@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, use, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import { Play, Send, CheckCircle2, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { Play, Send, CheckCircle2, XCircle, AlertTriangle, Loader2, Terminal } from 'lucide-react';
 
 export default function ProblemWorkspace({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -30,6 +30,25 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
       .then(data => {
         setQuestion(data);
         if (data.sampleInput) setCustomInput(data.sampleInput);
+        
+        // Auto-detect language based on topic
+        const cppTopics = [
+          'Class and Objects', 'Constructors and Destructors', 'Static Data Members', 
+          'Inline Functions', 'Call by Reference', 'Functions with Default Arguments', 
+          'Friend Functions and Friend Class', 'Single Inheritance', 'Multiple Inheritance', 
+          'Multi-level Inheritance', 'Hierarchical Inheritance', 'Multipath Inheritance', 
+          'Inheritance and Constructors', 'Function Overloading', 'Operator Overloading', 
+          'Virtual Functions', 'Pure Virtual Functions', 'Abstract Classes', 
+          'Function Templates', 'Class Templates', 'Standard Template Library'
+        ];
+
+        if (data.topicId && cppTopics.includes(data.topicId.name)) {
+          setLanguage('cpp');
+          setCode('#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your C++ code here\n    return 0;\n}');
+        } else {
+          setLanguage('c');
+          setCode('#include <stdio.h>\n\nint main() {\n    // Write your C code here\n    return 0;\n}');
+        }
       });
   }, [resolvedParams.id]);
 
@@ -82,7 +101,7 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
         </div>
 
         {/* Content Scroll Area */}
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
+        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           {activeTab === 'problem' && (
             <div className="space-y-6">
               <div>
@@ -115,15 +134,20 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
                 <pre className="text-slate-300 bg-slate-800 p-3 rounded-lg font-mono text-sm">{question.constraints}</pre>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-400 mb-2 uppercase tracking-wider">Sample Input</h3>
-                  <pre className="text-slate-300 bg-slate-950 p-4 rounded-lg font-mono border border-slate-800">{question.sampleInput}</pre>
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-400 mb-2 uppercase tracking-wider">Sample Output</h3>
-                  <pre className="text-slate-300 bg-slate-950 p-4 rounded-lg font-mono border border-slate-800">{question.sampleOutput}</pre>
-                </div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-white mb-2">Samples</h3>
+                {question.testcases && question.testcases.slice(0, 3).map((tc: any, index: number) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 border-b border-slate-800 pb-4 last:border-0">
+                    <div>
+                      <h4 className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Sample Input {index + 1}</h4>
+                      <pre className="text-slate-300 bg-slate-950 p-4 rounded-lg font-mono border border-slate-800 text-sm overflow-x-auto">{tc.input}</pre>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Sample Output {index + 1}</h4>
+                      <pre className="text-slate-300 bg-slate-950 p-4 rounded-lg font-mono border border-slate-800 text-sm overflow-x-auto">{tc.expectedOutput}</pre>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {question.explanation && (
@@ -144,41 +168,40 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
       </div>
 
       {/* Right Pane: Editor & Output */}
-      <div className="w-full lg:w-1/2 flex flex-col bg-slate-900">
+      <div className="w-full lg:w-1/2 flex flex-col bg-slate-900 overflow-hidden">
         
         {/* Editor Toolbar */}
         <div className="flex items-center justify-between px-4 py-2 bg-slate-950 border-b border-slate-800">
           <select 
             value={language}
             onChange={(e) => setLanguage(e.target.value as any)}
-            className="bg-slate-800 text-white text-sm rounded-lg px-3 py-1.5 border border-slate-700 outline-none focus:border-blue-500"
+            className="bg-slate-900 text-slate-200 text-xs px-2 py-1 rounded border border-slate-700 focus:outline-none focus:border-blue-500"
           >
-            <option value="c">C (GCC)</option>
-            <option value="cpp">C++ (GCC)</option>
+            <option value="c">C (GCC 11.4.0)</option>
+            <option value="cpp">C++ (GCC 11.4.0)</option>
           </select>
-
-          <div className="flex space-x-3">
+          <div className="flex space-x-2">
             <button 
               onClick={handleRun}
               disabled={isRunning || isSubmitting}
-              className="flex items-center px-4 py-1.5 text-sm font-medium text-slate-200 bg-slate-800 rounded-lg hover:bg-slate-700 transition border border-slate-700 hover:border-slate-500 disabled:opacity-50"
+              className="flex items-center space-x-1 px-3 py-1 bg-slate-800 text-slate-200 text-xs font-bold rounded hover:bg-slate-700 transition-colors disabled:opacity-50"
             >
-              {isRunning ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2 text-emerald-400" />}
-              Run
+              <Play className="w-3 h-3 text-emerald-400" />
+              <span>{isRunning ? 'Running...' : 'Run'}</span>
             </button>
             <button 
               onClick={handleSubmit}
               disabled={isRunning || isSubmitting}
-              className="flex items-center px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition shadow-[0_0_10px_rgba(37,99,235,0.3)] disabled:opacity-50"
+              className="flex items-center space-x-1 px-4 py-1 bg-blue-600 text-white text-xs font-bold rounded hover:bg-blue-700 transition-colors shadow-[0_0_10px_rgba(37,99,235,0.3)] disabled:opacity-50"
             >
-              {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
-              Submit
+              <Terminal className="w-3 h-3" />
+              <span>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
             </button>
           </div>
         </div>
 
         {/* Monaco Editor */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative border-b border-slate-800">
           <Editor
             height="100%"
             language={language}
@@ -189,74 +212,68 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
               minimap: { enabled: false },
               fontSize: 14,
               fontFamily: 'var(--font-mono)',
-              padding: { top: 16 },
+              padding: { top: 16, bottom: 16 },
               scrollBeyondLastLine: false,
               smoothScrolling: true,
               cursorBlinking: 'smooth',
+              scrollbar: {
+                alwaysConsumeMouseWheel: false,
+              }
             }}
           />
         </div>
 
-        {/* Terminal / Output Area */}
-        <div ref={consoleRef} className="h-1/3 min-h-[250px] border-t border-slate-800 flex flex-col bg-slate-950">
+        {/* Console / Output Area */}
+        <div className="h-[250px] flex flex-col bg-slate-950 overflow-hidden">
           <div className="px-4 py-2 border-b border-slate-800 bg-slate-900 flex justify-between items-center">
-            <span className="text-sm font-medium text-slate-300">Console</span>
+            <span className="text-sm font-medium text-slate-300">Console & Custom Input</span>
+            {output && <button onClick={() => setOutput(null)} className="text-xs text-blue-400 hover:underline">Clear</button>}
           </div>
           
-          <div className="flex-1 overflow-y-auto p-4 font-mono text-sm">
+          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             {!output ? (
-              <div className="space-y-4 h-full flex flex-col">
-                <div className="flex-1">
-                  <label className="text-xs text-slate-500 mb-1 block">Custom Input</label>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-slate-500 mb-1 block uppercase font-bold tracking-wider">Custom Input</label>
                   <textarea 
                     value={customInput}
                     onChange={(e) => setCustomInput(e.target.value)}
-                    className="w-full h-[100px] bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-300 focus:outline-none focus:border-blue-500 resize-none"
-                    placeholder="Enter custom input here..."
+                    className="w-full h-[100px] bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-300 font-mono text-sm focus:outline-none focus:border-blue-500 resize-none"
+                    placeholder="Enter input for your program..."
                   />
                 </div>
-                <div className="text-slate-500 italic">Click "Run" to test custom input, or "Submit" to evaluate.</div>
+                <div className="text-slate-500 text-xs italic">Use the "Run" button to test with this input.</div>
               </div>
             ) : output.type === 'run' ? (
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2 mb-4">
-                  {output.data.success ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : <XCircle className="w-5 h-5 text-red-500" />}
+              <div className="space-y-4 font-mono text-sm">
+                <div className="flex items-center space-x-2">
+                  {output.data.success ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
                   <span className={`font-bold ${output.data.success ? 'text-emerald-500' : 'text-red-500'}`}>
-                    {output.data.success ? 'Finished' : output.data.errorType}
+                    {output.data.success ? 'Execution Finished' : output.data.errorType}
                   </span>
                 </div>
                 <div className="bg-slate-900 border border-slate-800 rounded-lg p-3 whitespace-pre-wrap text-slate-300">
                   {output.data.output || <span className="text-slate-600 italic">No output</span>}
                 </div>
-                <button onClick={() => setOutput(null)} className="text-blue-400 hover:underline mt-4 block">Back to Custom Input</button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 font-mono text-sm">
                 <div className="flex items-center space-x-2">
-                  {output.data.verdict === 'Passed' ? <CheckCircle2 className="w-6 h-6 text-emerald-500" /> : 
-                   output.data.verdict === 'Compilation Error' ? <AlertTriangle className="w-6 h-6 text-amber-500" /> : 
-                   <XCircle className="w-6 h-6 text-red-500" />}
-                  <h2 className={`text-xl font-bold ${
+                  {output.data.verdict === 'Passed' ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : 
+                   output.data.verdict === 'Compilation Error' ? <AlertTriangle className="w-5 h-5 text-amber-500" /> : 
+                   <XCircle className="w-5 h-5 text-red-500" />}
+                  <h2 className={`text-lg font-bold ${
                     output.data.verdict === 'Passed' ? 'text-emerald-500' : 
                     output.data.verdict === 'Compilation Error' ? 'text-amber-500' : 'text-red-500'
                   }`}>{output.data.verdict}</h2>
                 </div>
-                
-                {output.data.verdict !== 'Compilation Error' && (
-                  <div className="text-slate-300 font-medium">
-                    Testcases Passed: <span className="text-white">{output.data.passedCount} / {output.data.totalCount}</span>
-                  </div>
-                )}
-
                 <div className="bg-slate-900 border border-slate-800 rounded-lg p-3 whitespace-pre-wrap text-slate-300">
                   {output.data.output || <span className="text-slate-600 italic">No output details</span>}
                 </div>
-                <button onClick={() => setOutput(null)} className="text-blue-400 hover:underline mt-4 block">Reset Console</button>
               </div>
             )}
           </div>
         </div>
-
       </div>
     </div>
   );

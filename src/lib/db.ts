@@ -39,11 +39,8 @@ async function connectToDatabase() {
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: true,
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-      family: 4 // Use IPv4, skip trying IPv6
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 2500,
     };
 
     if (!MONGODB_URI) {

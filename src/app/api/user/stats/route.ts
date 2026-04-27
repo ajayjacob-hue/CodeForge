@@ -16,23 +16,23 @@ export async function GET() {
     const userId = (session.user as any).id;
     await connectDB();
 
-    // 1. Get user data with populated submissions
-    const user = await User.findById(userId).populate({
-      path: 'submissions.questionId',
-      select: 'title topicId'
-    });
+    // 1. Parallelize basic data fetching
+    const [user, totalQuestions] = await Promise.all([
+      User.findById(userId).populate({
+        path: 'submissions.questionId',
+        select: 'title topicId'
+      }),
+      Question.countDocuments()
+    ]);
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // 2. Get total questions count
-    const totalQuestions = await Question.countDocuments();
-
-    // 3. Solved questions count
+    // 2. Solved questions count
     const solvedQuestionsCount = user.solvedQuestions.length;
 
-    // 4. Get recent activity from user.submissions
+    // 3. Get recent activity from user.submissions
     const recentActivity = [...user.submissions]
       .sort((a: any, b: any) => b.submittedAt - a.submittedAt)
       .slice(0, 5)
@@ -46,33 +46,10 @@ export async function GET() {
         time: s.submittedAt ? new Date(s.submittedAt).toLocaleDateString() : 'Recently'
       }));
 
-    // 5. Get topic mastery (All Topics)
-    const topics = await Topic.find().sort({ order: 1 });
-    const topicMastery = [];
-    const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-500', 'bg-rose-500', 'bg-indigo-500'];
-
-    const solvedSet = new Set(user.solvedQuestions.map(id => id.toString()));
-
-    for (let i = 0; i < topics.length; i++) {
-      const topic = topics[i];
-      const topicQuestions = await Question.find({ topicId: topic._id }).distinct('_id');
-      const solvedInTopic = topicQuestions.filter(id => solvedSet.has(id.toString())).length;
-
-      topicMastery.push({
-        name: topic.name,
-        total: topicQuestions.length || 3,
-        solved: solvedInTopic,
-        color: colors[i % colors.length]
-      });
-    }
-
     return NextResponse.json({
       totalQuestions: totalQuestions || 108,
       solvedQuestions: solvedQuestionsCount,
       streak: user?.streak || 0,
-      topicMastery: topicMastery.length > 0 ? topicMastery : [
-        { name: '1D Array', total: 3, solved: 0, color: 'bg-emerald-500' }
-      ],
       recentActivity: recentActivity.length > 0 ? recentActivity : [
         { title: 'No submissions yet', topic: '-', status: '-', time: '-' }
       ]

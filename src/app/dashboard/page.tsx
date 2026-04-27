@@ -6,7 +6,9 @@ import SubmissionModal from '@/components/SubmissionModal';
 
 export default function Dashboard() {
   const [stats, setStats] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [mastery, setMastery] = useState<any[]>([]);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [isLoadingMastery, setIsLoadingMastery] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -21,13 +23,29 @@ export default function Dashboard() {
       } catch (err) {
         console.error('Failed to fetch stats:', err);
       } finally {
-        setIsLoading(false);
+        setIsLoadingStats(false);
       }
     }
+
+    async function fetchMastery() {
+      try {
+        const res = await fetch('/api/user/mastery');
+        if (res.ok) {
+          const data = await res.json();
+          setMastery(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch mastery:', err);
+      } finally {
+        setIsLoadingMastery(false);
+      }
+    }
+
     fetchStats();
+    fetchMastery();
   }, []);
 
-  if (isLoading) {
+  if (isLoadingStats) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
@@ -39,7 +57,6 @@ export default function Dashboard() {
     totalQuestions: 150,
     solvedQuestions: 0,
     streak: 0,
-    topicMastery: [],
     recentActivity: []
   };
 
@@ -135,7 +152,12 @@ export default function Dashboard() {
             Topic Mastery
           </h2>
           <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-            {data.topicMastery.length > 0 ? data.topicMastery.map((topic: any, idx: number) => (
+            {isLoadingMastery ? (
+              <div className="flex flex-col items-center justify-center py-10 space-y-4">
+                <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                <p className="text-xs text-slate-500">Calculating topic mastery...</p>
+              </div>
+            ) : mastery.length > 0 ? mastery.map((topic: any, idx: number) => (
               <div key={idx}>
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-slate-300 font-medium">{topic.name}</span>

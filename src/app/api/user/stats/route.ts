@@ -37,9 +37,12 @@ export async function GET() {
       .sort((a: any, b: any) => b.submittedAt - a.submittedAt)
       .slice(0, 5)
       .map(s => ({
+        questionId: s.questionId?._id || s.questionId,
         title: (s.questionId as any)?.title || 'Unknown Problem',
         topic: 'C++', 
         status: s.verdict,
+        code: s.code,
+        language: s.language,
         time: s.submittedAt ? new Date(s.submittedAt).toLocaleDateString() : 'Recently'
       }));
 

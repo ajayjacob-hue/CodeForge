@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect, use, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import { Play, Send, CheckCircle2, XCircle, AlertTriangle, Loader2, Terminal } from 'lucide-react';
+import { Play, Send, CheckCircle2, XCircle, AlertTriangle, Loader2, Terminal, ExternalLink, Calendar, Code2 } from 'lucide-react';
 import { useSession, signIn } from 'next-auth/react';
+import SubmissionModal from '@/components/SubmissionModal';
 
 export default function ProblemWorkspace({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -17,6 +18,11 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [output, setOutput] = useState<any>(null);
+  
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [isLoadingSubmissions, setIsLoadingSubmissions] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const consoleRef = useRef<HTMLDivElement>(null);
 
@@ -53,6 +59,27 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
       });
   }, [resolvedParams.id]);
 
+  useEffect(() => {
+    if (activeTab === 'submissions' && session) {
+      fetchSubmissions();
+    }
+  }, [activeTab, session]);
+
+  const fetchSubmissions = async () => {
+    setIsLoadingSubmissions(true);
+    try {
+      const res = await fetch(`/api/user/submissions/${resolvedParams.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSubmissions(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch submissions:', err);
+    } finally {
+      setIsLoadingSubmissions(false);
+    }
+  };
+
   const handleRun = async () => {
     setIsRunning(true);
     try {
@@ -79,10 +106,22 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
       });
       const data = await res.json();
       setOutput({ type: 'submit', data });
+      if (data.verdict === 'Passed') {
+        // Refresh submissions if passed
+        fetchSubmissions();
+      }
     } catch (e: any) {
       setOutput({ type: 'submit', data: { success: false, verdict: 'System Error', output: e.message }});
     }
     setIsSubmitting(false);
+  };
+
+  const openSubmissionDetails = (sub: any) => {
+    setSelectedSubmission({
+      ...sub,
+      title: question.title
+    });
+    setIsModalOpen(true);
   };
 
   if (!question) {
@@ -161,10 +200,62 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
             <div className="text-slate-400 text-center pt-10">Theory content will be loaded here.</div>
           )}
           {activeTab === 'submissions' && (
-            <div className="text-slate-400 text-center pt-10">
-              {session ? 'Your submissions will appear here.' : 'Please sign in to view your submissions.'}
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-white mb-4">Your Submissions</h2>
+              {!session ? (
+                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-8 text-center">
+                  <p className="text-slate-400 mb-4">Please sign in to view your submissions.</p>
+                  <button onClick={() => signIn()} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Sign In</button>
+                </div>
+              ) : isLoadingSubmissions ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                </div>
+              ) : submissions.length === 0 ? (
+                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-8 text-center text-slate-500">
+                  No submissions yet for this problem.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {submissions.map((sub, idx) => (
+                    <div key={idx} className="bg-slate-950/50 border border-slate-800 rounded-xl p-4 flex items-center justify-between hover:border-slate-700 transition-colors group">
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          sub.verdict === 'Passed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'
+                        }`}>
+                          {sub.verdict === 'Passed' ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                        </div>
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <span className={`font-bold ${sub.verdict === 'Passed' ? 'text-emerald-500' : 'text-red-500'}`}>{sub.verdict}</span>
+                            <span className="text-slate-700">•</span>
+                            <span className="text-xs text-slate-500 uppercase">{sub.language}</span>
+                          </div>
+                          <div className="flex items-center space-x-3 mt-1 text-xs text-slate-500">
+                            <span className="flex items-center"><Calendar className="w-3 h-3 mr-1" /> {new Date(sub.submittedAt).toLocaleDateString()}</span>
+                            <span>{sub.passedCount} / {sub.totalCount} testcases</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => openSubmissionDetails(sub)}
+                        className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all flex items-center space-x-1"
+                      >
+                        <Code2 className="w-4 h-4" />
+                        <span className="text-xs font-medium">View Code</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
+          
+          <SubmissionModal 
+            isOpen={isModalOpen} 
+            onClose={() => setIsModalOpen(false)} 
+            submission={selectedSubmission} 
+          />
         </div>
       </div>
 

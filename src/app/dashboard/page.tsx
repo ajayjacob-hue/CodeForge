@@ -1,11 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Flame, Target, BookOpen, Clock, Activity, Loader2 } from 'lucide-react';
+import { Flame, Target, BookOpen, Clock, Activity, Loader2, Code2 } from 'lucide-react';
 import Link from 'next/link';
+import SubmissionModal from '@/components/SubmissionModal';
 
 export default function Dashboard() {
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchStats() {
@@ -41,6 +44,19 @@ export default function Dashboard() {
   };
 
   const progressPercentage = Math.round((data.solvedQuestions / data.totalQuestions) * 100);
+
+  const openSubmissionDetails = (activity: any) => {
+    if (activity.code) {
+      setSelectedSubmission({
+        code: activity.code,
+        language: activity.language,
+        verdict: activity.status,
+        submittedAt: activity.time,
+        title: activity.title
+      });
+      setIsModalOpen(true);
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
@@ -146,20 +162,32 @@ export default function Dashboard() {
           </h2>
           <div className="space-y-4">
             {data.recentActivity.length > 0 ? data.recentActivity.map((activity: any, idx: number) => (
-              <div key={idx} className="flex items-center justify-between p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-slate-700 transition-colors">
-                <div>
-                  <h3 className="text-white font-medium mb-1">{activity.title}</h3>
-                  <div className="flex items-center space-x-3 text-xs">
-                    <span className="text-slate-500">{activity.topic}</span>
-                    <span className="text-slate-700">•</span>
-                    <span className="text-slate-500">{activity.time}</span>
+              <div 
+                key={idx} 
+                onClick={() => openSubmissionDetails(activity)}
+                className={`flex items-center justify-between p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-slate-700 transition-colors ${activity.code ? 'cursor-pointer group' : ''}`}
+              >
+                <div className="flex items-center space-x-4">
+                  <div>
+                    <h3 className="text-white font-medium mb-1 group-hover:text-blue-400 transition-colors">{activity.title}</h3>
+                    <div className="flex items-center space-x-3 text-xs">
+                      <span className="text-slate-500">{activity.topic}</span>
+                      <span className="text-slate-700">•</span>
+                      <span className="text-slate-500">{activity.time}</span>
+                    </div>
                   </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  activity.status === 'Passed' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
-                }`}>
-                  {activity.status}
-                </span>
+                <div className="flex items-center space-x-3">
+                  {activity.code && (
+                    <Code2 className="w-4 h-4 text-slate-600 group-hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-all" />
+                  )}
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    activity.status === 'Passed' ? 'bg-emerald-500/10 text-emerald-400' : 
+                    activity.status === '-' ? 'bg-slate-500/10 text-slate-500' : 'bg-red-500/10 text-red-400'
+                  }`}>
+                    {activity.status}
+                  </span>
+                </div>
               </div>
             )) : (
               <p className="text-slate-500 text-sm">No submissions yet.</p>
@@ -170,6 +198,12 @@ export default function Dashboard() {
           </button>
         </div>
       </div>
+
+      <SubmissionModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        submission={selectedSubmission} 
+      />
     </div>
   );
 }

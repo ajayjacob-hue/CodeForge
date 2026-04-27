@@ -43,6 +43,9 @@ async function connectToDatabase() {
       serverSelectionTimeoutMS: 1500, // Fail fast in 1.5s if DB is not available
     };
 
+    if (!MONGODB_URI) {
+      throw new Error('Please define the MONGODB_URI environment variable inside .env');
+    }
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
       return mongoose;
     });

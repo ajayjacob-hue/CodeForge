@@ -1,27 +1,62 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, LayoutList, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, LayoutList, CheckCircle2, Loader2 } from 'lucide-react';
 
 export default function PracticePage() {
   const [topics, setTopics] = useState<any[]>([]);
   const [questions, setQuestions] = useState<any[]>([]);
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load from cache on mount for "instant" feel
+  useEffect(() => {
+    const cachedTopics = localStorage.getItem('codeforge_topics');
+    const cachedLastTopic = localStorage.getItem('codeforge_last_topic');
+    
+    if (cachedTopics) {
+      const parsedTopics = JSON.parse(cachedTopics);
+      setTopics(parsedTopics);
+      if (cachedLastTopic) {
+        setActiveTopic(cachedLastTopic);
+      } else if (parsedTopics.length > 0) {
+        setActiveTopic(parsedTopics[0]._id);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     fetch('/api/topics')
       .then(res => res.json())
       .then(data => {
         setTopics(data);
-        if (data.length > 0) setActiveTopic(data[0]._id);
+        localStorage.setItem('codeforge_topics', JSON.stringify(data));
+        if (data.length > 0 && !activeTopic) {
+          setActiveTopic(data[0]._id);
+        }
       });
   }, []);
 
   useEffect(() => {
     if (activeTopic) {
+      localStorage.setItem('codeforge_last_topic', activeTopic);
+      
+      // Check for cached questions for this topic
+      const cachedQuestions = localStorage.getItem(`codeforge_questions_${activeTopic}`);
+      if (cachedQuestions) {
+        setQuestions(JSON.parse(cachedQuestions));
+        setIsLoading(false);
+      } else {
+        setIsLoading(true);
+      }
+
       fetch(`/api/questions?topicId=${activeTopic}`)
         .then(res => res.json())
-        .then(data => setQuestions(data));
+        .then(data => {
+          setQuestions(data);
+          localStorage.setItem(`codeforge_questions_${activeTopic}`, JSON.stringify(data));
+          setIsLoading(false);
+        });
     }
   }, [activeTopic]);
 
@@ -59,7 +94,11 @@ export default function PracticePage() {
 
         {/* Questions List */}
         <div className="flex-1 w-full space-y-4">
-          {questions.length === 0 ? (
+          {isLoading && questions.length === 0 ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+            </div>
+          ) : questions.length === 0 ? (
             <div className="glass-panel rounded-2xl p-8 text-center text-slate-400">
               No questions found for this topic.
             </div>

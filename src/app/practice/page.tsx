@@ -68,7 +68,7 @@ export default function PracticePage() {
           <p className="text-slate-400">Select a topic and start solving to build your streak.</p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8 items-start flex-1 overflow-hidden">
+        <div className="flex flex-col lg:flex-row gap-8 items-stretch flex-1 overflow-hidden">
           {/* Topics Sidebar */}
           <div className="w-full lg:w-1/4 flex-shrink-0 glass-panel rounded-2xl p-4 flex flex-col max-h-[300px] lg:max-h-full overflow-hidden">
             <div className="flex items-center space-x-2 mb-4 px-2 flex-shrink-0">

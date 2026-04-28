@@ -61,16 +61,16 @@ export default function PracticePage() {
   }, [activeTopic]);
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
-      <div className="max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col h-full">
+    <div className="h-[calc(100vh-4rem)] overflow-hidden flex flex-col">
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4 flex flex-col flex-1 min-h-0">
         <div className="mb-6 flex-shrink-0">
           <h1 className="text-3xl font-bold text-white mb-2">Practice Space</h1>
           <p className="text-slate-400">Select a topic and start solving to build your streak.</p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8 items-stretch flex-1 overflow-hidden">
+        <div className="flex flex-col lg:flex-row gap-8 flex-1 min-h-0">
           {/* Topics Sidebar */}
-          <div className="w-full lg:w-1/4 flex-shrink-0 glass-panel rounded-2xl p-4 flex flex-col max-h-[300px] lg:max-h-full overflow-hidden">
+          <div className="w-full lg:w-1/4 flex-shrink-0 glass-panel rounded-2xl p-4 flex flex-col min-h-0 max-h-[300px] lg:max-h-full">
             <div className="flex items-center space-x-2 mb-4 px-2 flex-shrink-0">
               <LayoutList className="w-5 h-5 text-blue-400" />
               <h2 className="text-lg font-bold text-white">Topics</h2>

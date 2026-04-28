@@ -75,7 +75,7 @@ export default function PracticePage() {
               <LayoutList className="w-5 h-5 text-blue-400" />
               <h2 className="text-lg font-bold text-white">Topics</h2>
             </div>
-            <div className="flex flex-row overflow-x-auto pb-2 lg:pb-0 lg:flex-col lg:space-y-1 gap-2 lg:gap-0 custom-scrollbar lg:overflow-y-auto flex-1">
+            <div className="flex flex-row overflow-x-auto lg:overflow-x-hidden pb-2 lg:pb-0 lg:flex-col lg:space-y-1 gap-2 lg:gap-0 custom-scrollbar lg:overflow-y-auto flex-1 scrollbar-hide">
               {topics.map(topic => (
                 <button
                   key={topic._id}

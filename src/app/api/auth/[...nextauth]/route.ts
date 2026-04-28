@@ -54,14 +54,14 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === 'google' || account?.provider === 'github') {
+      if ((account?.provider === 'google' || account?.provider === 'github') && user.email) {
         await connectDB();
         const existingUser = await User.findOne({ email: user.email });
 
         if (!existingUser) {
           // Create new user for OAuth
           await User.create({
-            username: user.name || user.email?.split('@')[0] || 'user',
+            username: user.name || user.email.split('@')[0] || 'user',
             email: user.email,
             // passwordHash is optional now
           });
@@ -74,7 +74,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.name = user.name;
       }
-      if (account && (account.provider === 'google' || account.provider === 'github')) {
+      if (account && (account.provider === 'google' || account.provider === 'github') && token.email) {
         // For OAuth, we need to make sure we have the DB ID
         await connectDB();
         const dbUser = await User.findOne({ email: token.email });

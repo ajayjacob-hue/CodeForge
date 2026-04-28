@@ -109,11 +109,11 @@ export async function POST(req: Request) {
         
         let newStreak = user.streak || 0;
         
-        if (!lastActive) {
+        if (newStreak === 0) {
           newStreak = 1;
-        } else {
+        } else if (lastActive) {
           const diffInMs = now.setHours(0,0,0,0) - lastActive.setHours(0,0,0,0);
-          const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+          const diffInDays = Math.round(diffInMs / (1000 * 60 * 60 * 24));
 
           if (diffInDays === 1) {
             newStreak += 1; // Successive day!
@@ -121,6 +121,8 @@ export async function POST(req: Request) {
             newStreak = 1; // Missed a day, reset.
           }
           // If diffInDays === 0, they already active today, keep same streak.
+        } else {
+          newStreak = 1;
         }
 
         const submissionData = {

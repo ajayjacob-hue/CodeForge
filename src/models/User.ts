@@ -3,7 +3,7 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 export interface IUser extends Document {
   username: string;
   email: string;
-  passwordHash: string;
+  passwordHash?: string;
   solvedQuestions: mongoose.Types.ObjectId[];
   bookmarks: mongoose.Types.ObjectId[];
   submissions: {
@@ -23,7 +23,7 @@ const UserSchema: Schema<IUser> = new Schema(
   {
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String },
     solvedQuestions: [{ type: Schema.Types.ObjectId, ref: 'Question' }],
     bookmarks: [{ type: Schema.Types.ObjectId, ref: 'Question' }],
     submissions: [

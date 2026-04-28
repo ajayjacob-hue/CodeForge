@@ -132,8 +132,8 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
     <div className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden bg-slate-950">
       
       {/* Left Pane: Problem Description */}
-      <div className="w-full lg:w-1/2 flex flex-col border-r border-slate-800 bg-slate-900">
-        <div className="flex bg-slate-950 px-4 border-b border-slate-800">
+      <div className="flex-1 flex flex-col lg:border-r border-b lg:border-b-0 border-slate-800 bg-slate-900 overflow-hidden">
+        <div className="flex bg-slate-950 px-4 border-b border-slate-800 overflow-x-auto custom-scrollbar">
           <button onClick={() => setActiveTab('problem')} className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'problem' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>Problem</button>
           <button onClick={() => setActiveTab('theory')} className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'theory' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>Theory</button>
           <button onClick={() => setActiveTab('submissions')} className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'submissions' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>Submissions</button>
@@ -260,7 +260,7 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
       </div>
 
       {/* Right Pane: Editor & Output */}
-      <div className="w-full lg:w-1/2 flex flex-col bg-slate-900 overflow-hidden">
+      <div className="flex-1 flex flex-col bg-slate-900 overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 bg-slate-950 border-b border-slate-800">
           <select 
             value={language}

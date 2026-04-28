@@ -1,6 +1,7 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GitHubProvider from 'next-auth/providers/github';
+import GoogleProvider from 'next-auth/providers/google';
 import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/db';
 import User from '@/models/User';
@@ -43,15 +44,43 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GITHUB_ID || '',
       clientSecret: process.env.GITHUB_SECRET || '',
     }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_ID || '',
+      clientSecret: process.env.GOOGLE_SECRET || '',
+    }),
   ],
   session: {
     strategy: 'jwt',
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account }) {
+      if (account?.provider === 'google' || account?.provider === 'github') {
+        await connectDB();
+        const existingUser = await User.findOne({ email: user.email });
+
+        if (!existingUser) {
+          // Create new user for OAuth
+          await User.create({
+            username: user.name || user.email?.split('@')[0] || 'user',
+            email: user.email,
+            // passwordHash is optional now
+          });
+        }
+      }
+      return true;
+    },
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
         token.name = user.name;
+      }
+      if (account && (account.provider === 'google' || account.provider === 'github')) {
+        // For OAuth, we need to make sure we have the DB ID
+        await connectDB();
+        const dbUser = await User.findOne({ email: token.email });
+        if (dbUser) {
+          token.id = dbUser._id.toString();
+        }
       }
       return token;
     },

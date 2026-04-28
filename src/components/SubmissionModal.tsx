@@ -94,7 +94,7 @@ export default function SubmissionModal({ isOpen, onClose, submission }: Submiss
         </div>
 
         {/* Code Editor */}
-        <div className="h-[500px] bg-slate-950 relative border-t border-slate-800">
+        <div className="flex-1 min-h-[300px] lg:min-h-[500px] bg-slate-950 relative border-t border-slate-800">
           <Editor
             key={submission.submittedAt?.toString() || 'default'}
             height="100%"

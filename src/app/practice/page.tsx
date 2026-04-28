@@ -69,24 +69,24 @@ export default function PracticePage() {
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         {/* Topics Sidebar */}
-        <div className="w-full lg:w-1/4 flex-shrink-0 glass-panel rounded-2xl p-4 sticky top-24">
+        <div className="w-full lg:w-1/4 flex-shrink-0 glass-panel rounded-2xl p-4 lg:sticky lg:top-24 z-10">
           <div className="flex items-center space-x-2 mb-4 px-2">
             <LayoutList className="w-5 h-5 text-blue-400" />
             <h2 className="text-lg font-bold text-white">Topics</h2>
           </div>
-          <div className="space-y-1">
+          <div className="flex flex-row overflow-x-auto pb-2 lg:pb-0 lg:flex-col lg:space-y-1 gap-2 lg:gap-0 custom-scrollbar">
             {topics.map(topic => (
               <button
                 key={topic._id}
                 onClick={() => setActiveTopic(topic._id)}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
+                className={`flex-shrink-0 whitespace-nowrap lg:w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
                   activeTopic === topic._id 
                     ? 'bg-blue-600 text-white font-medium shadow-[0_0_15px_rgba(37,99,235,0.3)]' 
                     : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                 }`}
               >
                 <span>{topic.name}</span>
-                <ChevronRight className={`w-4 h-4 ${activeTopic === topic._id ? 'opacity-100' : 'opacity-0'}`} />
+                <ChevronRight className={`hidden lg:block w-4 h-4 ${activeTopic === topic._id ? 'opacity-100' : 'opacity-0'}`} />
               </button>
             ))}
           </div>

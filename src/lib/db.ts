@@ -40,7 +40,7 @@ async function connectToDatabase() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 2500,
+      serverSelectionTimeoutMS: 15000,
     };
 
     if (!MONGODB_URI) {

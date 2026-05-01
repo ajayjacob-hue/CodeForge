@@ -43,6 +43,11 @@ export const authOptions: NextAuthOptions = {
     GitHubProvider({
       clientId: process.env.GITHUB_ID || '',
       clientSecret: process.env.GITHUB_SECRET || '',
+      authorization: {
+        params: {
+          scope: 'read:user user:email',
+        },
+      },
     }),
     GoogleProvider({
       clientId: process.env.GOOGLE_ID || '',
@@ -55,16 +60,38 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account }) {
       if ((account?.provider === 'google' || account?.provider === 'github') && user.email) {
-        await connectDB();
-        const existingUser = await User.findOne({ email: user.email });
+        try {
+          await connectDB();
+          const existingUser = await User.findOne({ email: user.email });
 
-        if (!existingUser) {
-          // Create new user for OAuth
-          await User.create({
-            username: user.name || user.email.split('@')[0] || 'user',
-            email: user.email,
-            // passwordHash is optional now
-          });
+          if (!existingUser) {
+            // Generate a unique username if necessary
+            let baseUsername = (user.name || user.email.split('@')[0] || 'user').replace(/\s+/g, '').toLowerCase();
+            let username = baseUsername;
+            let counter = 1;
+            
+            // Check for username collisions
+            while (await User.findOne({ username })) {
+              username = `${baseUsername}${counter}`;
+              counter++;
+            }
+
+            // Create new user for OAuth
+            await User.create({
+              username: username,
+              email: user.email,
+              solvedQuestions: [],
+              bookmarks: [],
+              submissions: [],
+              streak: 0,
+              lastActiveDate: new Date(),
+            });
+            console.log(`Successfully created OAuth user: ${user.email} with username: ${username}`);
+          }
+        } catch (error) {
+          console.error('Error during OAuth user creation:', error);
+          // Return false to prevent sign-in if we can't create the user
+          return false;
         }
       }
       return true;

@@ -129,7 +129,7 @@ export default function ProblemWorkspace({ params }: { params: Promise<{ id: str
   }
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden bg-slate-950">
+    <div className="flex-1 flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-4rem)] overflow-y-auto lg:overflow-hidden bg-slate-950">
       
       {/* Left Pane: Problem Description */}
       <div className="flex-1 flex flex-col lg:border-r border-b lg:border-b-0 border-slate-800 bg-slate-900 overflow-hidden">
